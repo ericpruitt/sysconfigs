@@ -188,10 +188,11 @@ function calculate()
     test -n "$result" && LAST_RESULT="$result" && echo "$result"
 }
 
-# Paginate arbitrary commands when stdout is a TTY. If stderr is attached to a
-# TTY, data written to it will also be sent to the pager. Just because stdout
-# and stderr are both TTYs does not necessarily mean it is the same terminal,
-# but in practice, this is rarely a problem.
+# Paginate arbitrary commands when stdout is a TTY and the commands are not
+# being executed in a subshell. If stderr is attached to a TTY, data written to
+# it will also be sent to the pager. Just because stdout and stderr are both
+# TTYs does not necessarily mean it is the same terminal, but in practice, this
+# is rarely a problem.
 #
 #   $1  Name or path of the command to execute.
 #   $2  White-space separated list of options to pass to the command when
@@ -207,7 +208,7 @@ function -paginate()
     local tty_specific_args="$2"
     shift 2
 
-    if [[ -t 1 ]]; then
+    if [[ -t 1 ]] && [[ "$BASH_SUBSHELL" -eq 0 ]]; then
         test "$tty_specific_args" != "--" || tty_specific_args=""
         test -t 2 || errfd=2
         "$command" $tty_specific_args "$@" 2>&"$errfd" | less -X -F -R
