@@ -47,6 +47,7 @@ clean:
 	rm -i -r $(HOST_KEYS)
 
 $(LOCAL_CONFIGS):
+	mkdir -p $(@D)
 	untracked="$$( \
 		echo '$@' \
 		| sed -e 's:\.local$$:.untracked:' \
@@ -58,15 +59,15 @@ $(LOCAL_CONFIGS):
 $(UNTRACKED_FILES):
 	target='$(@:/.FOLDER=)'; \
 	symlink="$${target%.*}"; \
-	if [ -e "$$symlink" ] || [ -L "$$symlink" ]; then \
-	    echo "$$symlink: already exists" >&2 && exit 1; \
-	fi; \
 	case "$@" in \
 	  */.FOLDER)    mkdir $(@D) && touch $@ ;; \
 	  */)           mkdir $@ ;; \
 	  *)            (set -o noclobber && > $@) ;; \
 	esac; \
-	ln -s "$${target##*/}" "$$symlink"
+	if [ -e "$$symlink" ] && ! [ -L "$$symlink" ]; then \
+	    echo "$$symlink: already exists" >&2 && exit 1; \
+	fi; \
+	ln -f -s "$${target##*/}" "$$symlink"
 
 $(TYPED_SSH_KEYS): $(SSH_KEYS_SECRET_FOLDER)
 	case "$@" in \
